@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Login - NSS Management System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-box">
+        <h2>Login to NSS System</h2>
+        <p class="login-subtitle">Select your role and enter credentials</p>
+        
+        <!-- Role Selector -->
+        <div class="role-selector">
+            <button class="role-btn active" data-role="volunteer">Volunteer</button>
+            <button class="role-btn" data-role="admin">Admin</button>
+        </div>
+
+        <!-- Volunteer Login Form -->
+        <form id="volunteer-form" method="POST" action="{{ url_for('login') }}" class="login-form active">
+            <input type="hidden" name="user_type" value="volunteer">
+            
+            <div class="form-group">
+                <label for="v_suc_code">SUC Code</label>
+                <input type="text" id="v_suc_code" name="suc_code" required placeholder="Enter your SUC Code">
+            </div>
+
+            <div class="form-group">
+                <label for="v_password">Password</label>
+                <input type="password" id="v_password" name="password" required placeholder="Last 4 digits of SUC Code">
+                <small class="form-help">Default password is the last 4 digits of your SUC code</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Login as Volunteer</button>
+        </form>
+
+        <!-- Admin Login Form -->
+        <form id="admin-form" method="POST" action="{{ url_for('login') }}" class="login-form">
+            <input type="hidden" name="user_type" value="admin">
+            
+            <div class="form-group">
+                <label for="a_admin_id">Admin ID</label>
+                <input type="text" id="a_admin_id" name="admin_id" required placeholder="Enter Admin ID">
+            </div>
+
+            <div class="form-group">
+                <label for="a_password">Password</label>
+                <input type="password" id="a_password" name="password" required placeholder="Enter your password">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Login as Admin</button>
+        </form>
+
+        <div class="login-footer">
+            <p>Not registered yet? <a href="{{ url_for('register') }}">Register as Volunteer</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleBtns = document.querySelectorAll('.role-btn');
+    const volunteerForm = document.getElementById('volunteer-form');
+    const adminForm = document.getElementById('admin-form');
+
+    roleBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove active class from all buttons
+            roleBtns.forEach(b => b.classList.remove('active'));
+            // Add active class to clicked button
+            this.classList.add('active');
+
+            // Toggle forms
+            const role = this.dataset.role;
+            if (role === 'volunteer') {
+                volunteerForm.classList.add('active');
+                adminForm.classList.remove('active');
+            } else {
+                adminForm.classList.add('active');
+                volunteerForm.classList.remove('active');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

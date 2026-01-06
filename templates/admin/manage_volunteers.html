@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Volunteers - Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<style>
+    .filter-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        margin-bottom: 2rem;
+    }
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        align-items: end;
+    }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    .status-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .status-inactive {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Manage Volunteers</h1>
+        <p>View, approve, and manage volunteer registrations</p>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <h3>Filters</h3>
+        <form method="GET" class="filter-row">
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status" onchange="this.form.submit()">
+                    <option value="">All</option>
+                    <option value="approved">Approved</option>
+                    <option value="pending">Pending</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="year">Year</label>
+                <select id="year" name="year" onchange="this.form.submit()">
+                    <option value="">All Years</option>
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="section">Section</label>
+                <input type="text" id="section" name="section" placeholder="Enter section">
+            </div>
+            <div class="form-group">
+                <label for="search">Search</label>
+                <input type="text" id="search" name="search" placeholder="Name or SUC Code">
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid" style="margin-bottom: 2rem;">
+        <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <h3>{{ volunteers|selectattr('is_approved', 'equalto', True)|list|length }}</h3>
+                <p>Approved</p>
+            </div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-content">
+                <h3>{{ volunteers|selectattr('is_approved', 'equalto', False)|list|length }}</h3>
+                <p>Pending</p>
+            </div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+                <h3>{{ volunteers|length }}</h3>
+                <p>Total</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Volunteers Table -->
+    <div class="dashboard-card">
+        <div class="card-header">
+            <h2>All Volunteers</h2>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-sm btn-success" onclick="exportToExcel()">Export to Excel</button>
+                <button class="btn btn-sm btn-primary" onclick="printTable()">Print</button>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if volunteers %}
+                <div class="table-responsive">
+                    <table class="data-table" id="volunteersTable">
+                        <thead>
+                            <tr>
+                                <th>SUC Code</th>
+                                <th>Name</th>
+                                <th>Roll No</th>
+                                <th>Year</th>
+                                <th>Section</th>
+                                <th>Department</th>
+                                <th>Email</th>
+                                <th>Mobile</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for volunteer in volunteers %}
+                            <tr>
+                                <td><strong>{{ volunteer.suc_code }}</strong></td>
+                                <td>{{ volunteer.full_name }}</td>
+                                <td>{{ volunteer.roll_no }}</td>
+                                <td>{{ volunteer.year }}</td>
+                                <td>{{ volunteer.section }}</td>
+                                <td>{{ volunteer.group_name }}</td>
+                                <td>{{ volunteer.email }}</td>
+                                <td>{{ volunteer.mobile_number }}</td>
+                                <td>
+                                    {% if volunteer.is_approved %}
+                                        <span class="status-badge status-approved">Approved</span>
+                                    {% else %}
+                                        <span class="status-badge status-pending">Pending</span>
+                                    {% endif %}
+                                    {% if not volunteer.is_active %}
+                                        <span class="status-badge status-inactive">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        {% if not volunteer.is_approved %}
+                                            <a href="{{ url_for('approve_volunteer', volunteer_id=volunteer.id) }}" 
+                                               class="btn btn-sm btn-success"
+                                               onclick="return confirm('Approve this volunteer?')">
+                                                Approve
+                                            </a>
+                                        {% endif %}
+                                        <button class="btn btn-sm btn-primary" onclick="viewDetails({{ volunteer.id }})">
+                                            View
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>No volunteers found</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Volunteer Detail Modal -->
+<div id="detailModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+        <h2>Volunteer Details</h2>
+        <div id="volunteerDetails"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewDetails(volunteerId) {
+    // Find volunteer data
+    const volunteers = {{ volunteers|tojson }};
+    const volunteer = volunteers.find(v => v.id === volunteerId);
+    
+    if (volunteer) {
+        const detailsHtml = `
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">
+                <div><strong>SUC Code:</strong> ${volunteer.suc_code}</div>
+                <div><strong>Full Name:</strong> ${volunteer.full_name}</div>
+                <div><strong>Father's Name:</strong> ${volunteer.father_name}</div>
+                <div><strong>Mother's Name:</strong> ${volunteer.mother_name}</div>
+                <div><strong>Roll No:</strong> ${volunteer.roll_no}</div>
+                <div><strong>Year:</strong> ${volunteer.year}</div>
+                <div><strong>Section:</strong> ${volunteer.section}</div>
+                <div><strong>Department:</strong> ${volunteer.group_name}</div>
+                <div><strong>Blood Group:</strong> ${volunteer.blood_group}</div>
+                <div><strong>Gender:</strong> ${volunteer.gender}</div>
+                <div><strong>Date of Birth:</strong> ${volunteer.date_of_birth}</div>
+                <div><strong>Community:</strong> ${volunteer.community}</div>
+                <div><strong>Email:</strong> ${volunteer.email}</div>
+                <div><strong>Mobile:</strong> ${volunteer.mobile_number}</div>
+                <div><strong>Parent Mobile:</strong> ${volunteer.parent_mobile_number}</div>
+                <div><strong>Aadhaar:</strong> ${volunteer.adhaar_number}</div>
+                <div><strong>Status:</strong> ${volunteer.is_approved ? 'Approved' : 'Pending'}</div>
+                <div><strong>Registered:</strong> ${new Date(volunteer.created_at).toLocaleDateString()}</div>
+            </div>
+        `;
+        document.getElementById('volunteerDetails').innerHTML = detailsHtml;
+        document.getElementById('detailModal').style.display = 'block';
+    }
+}
+
+function closeModal() {
+    document.getElementById('detailModal').style.display = 'none';
+}
+
+function exportToExcel() {
+    alert('Excel export functionality - to be implemented with backend support');
+}
+
+function printTable() {
+    window.print();
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('detailModal');
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+</script>
+{% endblock %}

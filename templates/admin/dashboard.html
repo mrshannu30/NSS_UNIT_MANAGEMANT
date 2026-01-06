@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - NSS Management System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Admin Dashboard</h1>
+        <p>Welcome back, {{ session.username }}!</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card blue">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+                <h3>{{ volunteer_stats.total_volunteers if volunteer_stats else 0 }}</h3>
+                <p>Total Volunteers</p>
+            </div>
+        </div>
+
+        <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <h3>{{ volunteer_stats.approved_volunteers if volunteer_stats else 0 }}</h3>
+                <p>Approved Volunteers</p>
+            </div>
+        </div>
+
+        <div class="stat-card orange">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-content">
+                <h3>{{ volunteer_stats.pending_volunteers if volunteer_stats else 0 }}</h3>
+                <p>Pending Approvals</p>
+            </div>
+        </div>
+
+        <div class="stat-card purple">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+                <h3>{{ event_stats.total_events if event_stats else 0 }}</h3>
+                <p>Total Events</p>
+            </div>
+        </div>
+
+        <div class="stat-card teal">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-content">
+                <h3>{{ event_stats.upcoming_events if event_stats else 0 }}</h3>
+                <p>Upcoming Events</p>
+            </div>
+        </div>
+
+        <div class="stat-card red">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <h3>{{ attendance_stats.total_attendance if attendance_stats else 0 }}</h3>
+                <p>Total Attendance</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="action-buttons">
+            <a href="{{ url_for('manage_volunteers') }}" class="action-btn blue">
+                <span class="action-icon">👥</span>
+                <span class="action-text">Manage Volunteers</span>
+            </a>
+            <a href="{{ url_for('create_event') }}" class="action-btn green">
+                <span class="action-icon">➕</span>
+                <span class="action-text">Create Event</span>
+            </a>
+            <a href="{{ url_for('manage_events') }}" class="action-btn purple">
+                <span class="action-icon">📅</span>
+                <span class="action-text">Manage Events</span>
+            </a>
+            <a href="{{ url_for('view_attendance') }}" class="action-btn orange">
+                <span class="action-icon">📊</span>
+                <span class="action-text">View Attendance</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="dashboard-grid">
+        <!-- Pending Volunteers -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h2>Pending Volunteer Approvals</h2>
+                <span class="badge">{{ pending_volunteers|length }}</span>
+            </div>
+            <div class="card-body">
+                {% if pending_volunteers %}
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>SUC Code</th>
+                                    <th>Email</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for volunteer in pending_volunteers %}
+                                <tr>
+                                    <td>{{ volunteer.full_name }}</td>
+                                    <td>{{ volunteer.suc_code }}</td>
+                                    <td>{{ volunteer.email }}</td>
+                                    <td>
+                                        <a href="{{ url_for('approve_volunteer', volunteer_id=volunteer.id) }}" 
+                                           class="btn btn-sm btn-success"
+                                           onclick="return confirm('Approve this volunteer?')">
+                                            Approve
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('manage_volunteers') }}" class="btn btn-link">View All Volunteers →</a>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No pending approvals</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h2>Upcoming Events</h2>
+                <span class="badge">{{ upcoming_events|length }}</span>
+            </div>
+            <div class="card-body">
+                {% if upcoming_events %}
+                    <div class="event-list">
+                        {% for event in upcoming_events %}
+                        <div class="event-item">
+                            <div class="event-date">
+                                <span class="event-day">{{ event.event_date.strftime('%d') }}</span>
+                                <span class="event-month">{{ event.event_date.strftime('%b') }}</span>
+                            </div>
+                            <div class="event-details">
+                                <h3>{{ event.event_name }}</h3>
+                                <p>{{ event.venue }} • {{ event.event_time.strftime('%I:%M %p') }}</p>
+                            </div>
+                            <div class="event-actions">
+                                <button class="btn btn-sm btn-primary" onclick="generateQR({{ event.id }})">
+                                    QR Code
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('manage_events') }}" class="btn btn-link">View All Events →</a>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No upcoming events</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Modal -->
+<div id="qrModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2>Event QR Code</h2>
+        <div id="qrCodeContainer" class="qr-container">
+            <img id="qrImage" src="" alt="QR Code">
+            <p id="eventName"></p>
+        </div>
+        <button class="btn btn-primary" onclick="downloadQR()">Download QR Code</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/admin-dashboard.js') }}"></script>
+<script>
+function generateQR(eventId) {
+    fetch(`/api/qr/generate/${eventId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('qrImage').src = 'data:image/png;base64,' + data.qr_code;
+                document.getElementById('eventName').textContent = data.event_name;
+                document.getElementById('qrModal').style.display = 'block';
+            } else {
+                alert('Failed to generate QR code');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function downloadQR() {
+    const img = document.getElementById('qrImage');
+    const link = document.createElement('a');
+    link.download = 'event_qr_code.png';
+    link.href = img.src;
+    link.click();
+}
+
+// Modal close functionality
+document.querySelector('.modal-close').onclick = function() {
+    document.getElementById('qrModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('qrModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

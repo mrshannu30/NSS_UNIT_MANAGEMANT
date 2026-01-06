@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Volunteer Dashboard - NSS Management System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Volunteer Dashboard</h1>
+        <p>Welcome, {{ volunteer.full_name }}!</p>
+    </div>
+
+    <!-- Profile Summary -->
+    <div class="profile-summary">
+        <div class="profile-avatar">
+            <div class="avatar-placeholder">{{ volunteer.full_name[0] }}</div>
+        </div>
+        <div class="profile-info">
+            <h2>{{ volunteer.full_name }}</h2>
+            <p><strong>SUC Code:</strong> {{ volunteer.suc_code }}</p>
+            <p><strong>Roll No:</strong> {{ volunteer.roll_no }}</p>
+            <p><strong>Year:</strong> {{ volunteer.year }} | <strong>Section:</strong> {{ volunteer.section }}</p>
+            <p><strong>Department:</strong> {{ volunteer.group_name }}</p>
+        </div>
+        <div class="profile-stats">
+            <div class="stat-item">
+                <h3>{{ attendance_summary.total_events_attended if attendance_summary else 0 }}</h3>
+                <p>Events Attended</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="action-buttons">
+            <button class="action-btn blue" onclick="openScanner()">
+                <span class="action-icon">📱</span>
+                <span class="action-text">Scan QR for Attendance</span>
+            </button>
+            <a href="{{ url_for('volunteer_attendance') }}" class="action-btn green">
+                <span class="action-icon">📊</span>
+                <span class="action-text">My Attendance</span>
+            </a>
+            <a href="{{ url_for('change_password') }}" class="action-btn orange">
+                <span class="action-icon">🔒</span>
+                <span class="action-text">Change Password</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="dashboard-card">
+        <div class="card-header">
+            <h2>Upcoming Events</h2>
+            <span class="badge">{{ upcoming_events|length }}</span>
+        </div>
+        <div class="card-body">
+            {% if upcoming_events %}
+                <div class="event-list">
+                    {% for event in upcoming_events %}
+                    <div class="event-item">
+                        <div class="event-date">
+                            <span class="event-day">{{ event.event_date.strftime('%d') }}</span>
+                            <span class="event-month">{{ event.event_date.strftime('%b') }}</span>
+                        </div>
+                        <div class="event-details">
+                            <h3>{{ event.event_name }}</h3>
+                            <p><strong>Venue:</strong> {{ event.venue }}</p>
+                            <p><strong>Time:</strong> {{ event.event_time.strftime('%I:%M %p') }}</p>
+                            <p><strong>Type:</strong> {{ event.event_type }}</p>
+                            {% if event.event_description %}
+                            <p class="event-description">{{ event.event_description }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>No upcoming events scheduled</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- QR Scanner Modal -->
+<div id="scannerModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeScanner()">&times;</span>
+        <h2>Scan QR Code for Attendance</h2>
+        <div id="reader" class="qr-reader"></div>
+        <p class="scanner-help">Position the QR code within the frame to scan</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="{{ url_for('static', filename='js/volunteer-dashboard.js') }}"></script>
+<script>
+let html5QrCode;
+
+function openScanner() {
+    document.getElementById('scannerModal').style.display = 'block';
+    startScanner();
+}
+
+function closeScanner() {
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            document.getElementById('scannerModal').style.display = 'none';
+        }).catch(err => {
+            console.error('Error stopping scanner:', err);
+        });
+    } else {
+        document.getElementById('scannerModal').style.display = 'none';
+    }
+}
+
+function startScanner() {
+    html5QrCode = new Html5Qrcode("reader");
+    
+    html5QrCode.start(
+        { facingMode: "environment" },
+        {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+        },
+        (decodedText, decodedResult) => {
+            markAttendance(decodedText);
+            html5QrCode.stop();
+        },
+        (errorMessage) => {
+            // Handle scan errors silently
+        }
+    ).catch(err => {
+        console.error('Error starting scanner:', err);
+        alert('Unable to access camera. Please check permissions.');
+    });
+}
+
+function markAttendance(qrCode) {
+    fetch('/api/attendance/mark', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ qr_code: qrCode })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Attendance marked successfully!');
+            closeScanner();
+            location.reload();
+        } else {
+            alert(data.message || 'Failed to mark attendance');
+            closeScanner();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error marking attendance');
+        closeScanner();
+    });
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('scannerModal');
+    if (event.target == modal) {
+        closeScanner();
+    }
+}
+</script>
+{% endblock %}

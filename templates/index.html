@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Home - NSS Management System{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1>Welcome to NSS Unit Management System</h1>
+            <p class="hero-subtitle">National Service Scheme - Not Me But You</p>
+            <p class="hero-description">Manage volunteers, events, and attendance efficiently</p>
+            <div class="hero-buttons">
+                {% if not session.user_id %}
+                    <a href="{{ url_for('register') }}" class="btn btn-primary">Register as Volunteer</a>
+                    <a href="{{ url_for('login') }}" class="btn btn-secondary">Login</a>
+                {% else %}
+                    {% if session.user_type == 'admin' %}
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+                    {% else %}
+                        <a href="{{ url_for('volunteer_dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="features-section">
+    <div class="container">
+        <h2 class="section-title">Key Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Volunteer Management</h3>
+                <p>Easy registration and management of NSS volunteers with comprehensive profiles</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3>Event Management</h3>
+                <p>Create and manage NSS events, activities, and social service programs</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>QR Code Attendance</h3>
+                <p>Modern QR code-based attendance system for quick and accurate tracking</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Reports & Analytics</h3>
+                <p>Generate detailed reports and track volunteer participation statistics</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Secure Access</h3>
+                <p>Role-based access control for admins and volunteers with secure authentication</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📲</div>
+                <h3>Mobile Friendly</h3>
+                <p>Responsive design works seamlessly on all devices and screen sizes</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="about-section">
+    <div class="container">
+        <h2 class="section-title">About NSS</h2>
+        <div class="about-content">
+            <div class="about-text">
+                <h3>National Service Scheme</h3>
+                <p>The National Service Scheme (NSS) is a Central Sector Scheme of Government of India, Ministry of Youth Affairs & Sports. It provides opportunity to the student youth of 11th & 12th Class of schools at +2 Board level and student youth of Technical Institution, Graduate & Post Graduate at colleges and University level of India to take part in various government led community service activities & programmes.</p>
+                <p>The sole aim of the NSS is to provide hands on experience to young students in delivering community service. Since inception of the NSS in the year 1969, the number of students strength increased from 40,000 to over 3.8 million up to the end of March 2018 students in various universities, colleges and Institutions of higher learning have volunteered to take part in various community service programmes.</p>
+                <h4>NSS Motto</h4>
+                <p class="motto">"Not Me But You"</p>
+                <p>This motto reflects the essence of democratic living and upholds the need for selfless service and appreciation of the other person's point of view and also to show consideration for fellow human beings.</p>
+            </div>
+            <div class="about-stats">
+                <div class="stat-card">
+                    <h3>3.8M+</h3>
+                    <p>Volunteers Nationwide</p>
+                </div>
+                <div class="stat-card">
+                    <h3>50+</h3>
+                    <p>Years of Service</p>
+                </div>
+                <div class="stat-card">
+                    <h3>120</h3>
+                    <p>Hours Per Year</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cta-section">
+    <div class="container">
+        <h2>Ready to Make a Difference?</h2>
+        <p>Join NSS today and be part of meaningful community service</p>
+        {% if not session.user_id %}
+            <a href="{{ url_for('register') }}" class="btn btn-large btn-primary">Register Now</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
